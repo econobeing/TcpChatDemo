@@ -25,7 +25,6 @@ namespace TcpChatServer
             //encode the message
             var sendBytes = Encoding.UTF8.GetBytes(msg);
 
-            //dont send the message if the client isn't connected or we couldn't get the stream mutex
             if (!this._isConnected)
                 return;
 
@@ -76,11 +75,8 @@ namespace TcpChatServer
                     if (this._clientStream.CanRead && this._clientStream.DataAvailable)
                     {
                         var readBuffer = new byte[this._client.ReceiveBufferSize];
-                        do
-                        {
-                            var bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
-                            dataFromClient += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
-                        } while (this._clientStream.DataAvailable);
+                        var bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
+                        dataFromClient += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
                         this._clientStream.Flush();
                     }
 

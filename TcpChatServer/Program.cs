@@ -62,6 +62,7 @@ namespace TcpChatServer
 
         private static void Main(string[] args)
         {
+            Console.Title = "TCP Chat Server";
             var ip = ChooseServerIp();
             var port = ChoosePortNumber();
 

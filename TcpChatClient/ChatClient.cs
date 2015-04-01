@@ -39,11 +39,8 @@ namespace TcpChatClient
                     if (this._serverStream.CanRead && this._serverStream.DataAvailable)
                     {
                         var readBuffer = new byte[this._clientSocket.ReceiveBufferSize];
-                        do
-                        {
-                            var bytesRead = this._serverStream.Read(readBuffer, 0, this._clientSocket.ReceiveBufferSize);
-                            messageString += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
-                        } while (this._serverStream.DataAvailable);
+                        var bytesRead = this._serverStream.Read(readBuffer, 0, this._clientSocket.ReceiveBufferSize);
+                        messageString += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
                         this._serverStream.Flush();
                     }
                 }
