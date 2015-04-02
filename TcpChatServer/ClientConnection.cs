@@ -7,8 +7,8 @@ namespace TcpChatServer
 {
     public class ClientConnection
     {
-        private readonly Mutex _clientStreamMutex = new Mutex();
         private readonly ChatServer _server;
+        private readonly Object _streamLock = new Object();
         private TcpClient _client;
         private NetworkStream _clientStream;
         private bool _isConnected = true;
@@ -28,23 +28,20 @@ namespace TcpChatServer
             if (!this._isConnected)
                 return;
 
-            if (!this._clientStreamMutex.WaitOne(250))
-                return;
-
-            try
+            lock (this._streamLock)
             {
-                this._clientStream.Write(sendBytes, 0, sendBytes.Length);
-                this._clientStream.Flush();
-            }
-            catch
-            {
-                //drop for any exception
-                this._isConnected = false;
-                Console.WriteLine(">> [{0}] - Exception caught while sending to client, stopping connection", this.ClientNum);
-            }
-            finally
-            {
-                this._clientStreamMutex.ReleaseMutex();
+                try
+                {
+                    this._clientStream.Write(sendBytes, 0, sendBytes.Length);
+                    this._clientStream.Flush();
+                }
+                catch
+                {
+                    //drop for any exception
+                    this._isConnected = false;
+                    Console.WriteLine(">> [{0}] - Exception caught while sending to client, stopping connection",
+                        this.ClientNum);
+                }
             }
         }
 
@@ -65,39 +62,45 @@ namespace TcpChatServer
                 //sleep for just a little bit to not eat up the CPU
                 Thread.Sleep(1);
 
-                string dataFromClient = string.Empty;
                 byte[] readBuffer = new byte[this._client.ReceiveBufferSize];
+                int bytesRead = 0;
 
-                if (!this._clientStreamMutex.WaitOne(250))
+                lock (this._streamLock)
+                {
+                    try
+                    {
+                        //if there's data in the stream, get it
+                        if (this._clientStream.CanRead && this._clientStream.DataAvailable)
+                        {
+                            bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
+                            this._clientStream.Flush();
+                        }
+                    }
+                    catch
+                    {
+                        this._isConnected = false;
+                        Console.WriteLine(">> [{0}] - Exception caught while reading from client, stopping connection",
+                            this.ClientNum);
+                    }
+                }
+
+                if (bytesRead <= 0)
                     continue;
 
                 try
                 {
-                    //if there's data in the stream, get it
-                    if (this._clientStream.CanRead && this._clientStream.DataAvailable)
+                    string dataFromClient = Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
+
+                    //if there was actually data received, tell the server to broadcast it
+                    if (!string.IsNullOrWhiteSpace(dataFromClient))
                     {
-                        int bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
-                        dataFromClient += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
-                        this._clientStream.Flush();
+                        dataFromClient = string.Format("[{0}]: {1}", this.ClientNum, dataFromClient);
+                        this._server.BroadcastMessage(dataFromClient);
                     }
                 }
                 catch
                 {
-                    //stop this client whenever any exception is caught
-                    this._isConnected = false;
-                    Console.WriteLine(">> [{0}] - Exception caught while reading from client, stopping connection",
-                        this.ClientNum);
-                }
-                finally
-                {
-                    this._clientStreamMutex.ReleaseMutex();
-                }
-
-                //if there was actually data received, tell the server to broadcast it
-                if (!string.IsNullOrWhiteSpace(dataFromClient))
-                {
-                    dataFromClient = string.Format("[{0}]: {1}", this.ClientNum, dataFromClient);
-                    this._server.BroadcastMessage(dataFromClient);
+                    Console.WriteLine("Error encoding message");
                 }
             }
         }
