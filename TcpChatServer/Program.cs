@@ -7,11 +7,11 @@ namespace TcpChatServer
     {
         private static int ChoosePortNumber()
         {
-            var port = 0;
+            int port = 0;
             while (port <= 0 || port > 65535)
             {
                 Console.Write("\nChoose Port Number: ");
-                var input = Console.ReadLine();
+                string input = Console.ReadLine();
                 try
                 {
                     port = int.Parse(input);
@@ -27,20 +27,20 @@ namespace TcpChatServer
 
         private static IPAddress ChooseServerIp()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
 
-            var i = 0;
-            foreach (var ip in host.AddressList)
+            int i = 0;
+            foreach (IPAddress ip in host.AddressList)
             {
                 Console.WriteLine("({0}) - {1}", i, ip);
                 i++;
             }
 
-            var choice = -2;
+            int choice = -2;
             while (choice < -1 || choice >= host.AddressList.Length)
             {
                 Console.Write("\nChoose an IP address to start the server on, -1 to start on localhost: ");
-                var input = Console.ReadLine();
+                string input = Console.ReadLine();
                 try
                 {
                     choice = int.Parse(input);
@@ -63,10 +63,10 @@ namespace TcpChatServer
         private static void Main(string[] args)
         {
             Console.Title = "TCP Chat Server";
-            var ip = ChooseServerIp();
-            var port = ChoosePortNumber();
+            IPAddress ip = ChooseServerIp();
+            int port = ChoosePortNumber();
 
-            var server = new ChatServer(ip, port);
+            ChatServer server = new ChatServer(ip, port);
         }
     }
 }

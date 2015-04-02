@@ -23,7 +23,7 @@ namespace TcpChatServer
         public void SendMessage(string msg)
         {
             //encode the message
-            var sendBytes = Encoding.UTF8.GetBytes(msg);
+            byte[] sendBytes = Encoding.UTF8.GetBytes(msg);
 
             if (!this._isConnected)
                 return;
@@ -54,7 +54,7 @@ namespace TcpChatServer
             this._client = client;
             this._clientStream = client.GetStream();
 
-            var receiveThread = new Thread(this.ReceiveMessagesThread);
+            Thread receiveThread = new Thread(this.ReceiveMessagesThread);
             receiveThread.Start();
         }
 
@@ -71,11 +71,11 @@ namespace TcpChatServer
                         continue;
 
                     //if there's data in the stream, get it
-                    var dataFromClient = string.Empty;
+                    string dataFromClient = string.Empty;
                     if (this._clientStream.CanRead && this._clientStream.DataAvailable)
                     {
-                        var readBuffer = new byte[this._client.ReceiveBufferSize];
-                        var bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
+                        byte[] readBuffer = new byte[this._client.ReceiveBufferSize];
+                        int bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
                         dataFromClient += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
                         this._clientStream.Flush();
                     }

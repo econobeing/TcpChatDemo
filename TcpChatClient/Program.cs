@@ -9,12 +9,12 @@ namespace TcpChatClient
             Console.Title = "TCP Chat Client";
 
             Console.Write("\nEnter IP address of host: ");
-            var ipString = Console.ReadLine();
+            string ipString = Console.ReadLine();
 
             Console.Write("\nEnter host port: ");
-            var portNum = int.Parse(Console.ReadLine());
+            int portNum = int.Parse(Console.ReadLine());
 
-            var chatClient = new ChatClient();
+            ChatClient chatClient = new ChatClient();
             chatClient.Start(ipString, portNum);
         }
     }

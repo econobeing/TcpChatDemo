@@ -18,7 +18,7 @@ namespace TcpChatServer
             this._serverListener.Start();
 
             //start threads
-            var clientConnectThread = new Thread(this.ConnectToClientsThread);
+            Thread clientConnectThread = new Thread(this.ConnectToClientsThread);
             clientConnectThread.Start();
         }
 
@@ -26,21 +26,21 @@ namespace TcpChatServer
         {
             //don't need a mutex because we're just reading
             Console.WriteLine(msg);
-            foreach (var clientConnection in this._clientConnections)
+            foreach (ClientConnection clientConnection in this._clientConnections)
                 clientConnection.SendMessage(msg);
         }
 
         private void ConnectToClientsThread()
         {
-            var counter = 0;
+            int counter = 0;
             while (true)
             {
                 //AcceptTcpClient will block until a new connection is made
-                var client = this._serverListener.AcceptTcpClient();
+                TcpClient client = this._serverListener.AcceptTcpClient();
                 counter++;
                 Console.WriteLine(">> Client #{0} joined", counter);
 
-                var clientConnection = new ClientConnection(this);
+                ClientConnection clientConnection = new ClientConnection(this);
                 clientConnection.StartClient(client, counter.ToString());
                 this._clientConnections.Add(clientConnection);
             }

@@ -17,10 +17,10 @@ namespace TcpChatClient
             this._clientSocket.Connect(host, port);
             this._serverStream = this._clientSocket.GetStream();
 
-            var listenerThread = new Thread(this.ListenerThread);
+            Thread listenerThread = new Thread(this.ListenerThread);
             listenerThread.Start();
 
-            var sendThread = new Thread(this.SendMessageThread);
+            Thread sendThread = new Thread(this.SendMessageThread);
             sendThread.Start();
         }
 
@@ -33,13 +33,13 @@ namespace TcpChatClient
                 if (!this._streamMutex.WaitOne(250))
                     continue;
 
-                var messageString = string.Empty;
+                string messageString = string.Empty;
                 try
                 {
                     if (this._serverStream.CanRead && this._serverStream.DataAvailable)
                     {
-                        var readBuffer = new byte[this._clientSocket.ReceiveBufferSize];
-                        var bytesRead = this._serverStream.Read(readBuffer, 0, this._clientSocket.ReceiveBufferSize);
+                        byte[] readBuffer = new byte[this._clientSocket.ReceiveBufferSize];
+                        int bytesRead = this._serverStream.Read(readBuffer, 0, this._clientSocket.ReceiveBufferSize);
                         messageString += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
                         this._serverStream.Flush();
                     }
@@ -64,13 +64,13 @@ namespace TcpChatClient
         {
             while (!this._stopThreads)
             {
-                var msg = Console.ReadLine();
+                string msg = Console.ReadLine();
 
                 if (string.IsNullOrWhiteSpace(msg))
                     continue;
 
-                var sendBytes = Encoding.UTF8.GetBytes(msg);
-                var sent = false;
+                byte[] sendBytes = Encoding.UTF8.GetBytes(msg);
+                bool sent = false;
                 while (!sent)
                 {
                     if (!this._streamMutex.WaitOne(250))
