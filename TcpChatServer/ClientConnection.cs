@@ -65,35 +65,39 @@ namespace TcpChatServer
                 //sleep for just a little bit to not eat up the CPU
                 Thread.Sleep(1);
 
+                string dataFromClient = string.Empty;
+                byte[] readBuffer = new byte[this._client.ReceiveBufferSize];
+
+                if (!this._clientStreamMutex.WaitOne(250))
+                    continue;
+
                 try
                 {
-                    if (!this._clientStreamMutex.WaitOne(250))
-                        continue;
-
                     //if there's data in the stream, get it
-                    string dataFromClient = string.Empty;
                     if (this._clientStream.CanRead && this._clientStream.DataAvailable)
                     {
-                        byte[] readBuffer = new byte[this._client.ReceiveBufferSize];
                         int bytesRead = this._clientStream.Read(readBuffer, 0, this._client.ReceiveBufferSize);
                         dataFromClient += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
                         this._clientStream.Flush();
-                    }
-
-                    this._clientStreamMutex.ReleaseMutex();
-
-                    //if there was actually data received, tell the server to broadcast it
-                    if (!string.IsNullOrWhiteSpace(dataFromClient))
-                    {
-                        dataFromClient = string.Format("[{0}]: {1}", this.ClientNum, dataFromClient);
-                        this._server.BroadcastMessage(dataFromClient);
                     }
                 }
                 catch
                 {
                     //stop this client whenever any exception is caught
                     this._isConnected = false;
-                    Console.WriteLine(">> [{0}] - Exception caught while reading from client, stopping connection", this.ClientNum);
+                    Console.WriteLine(">> [{0}] - Exception caught while reading from client, stopping connection",
+                        this.ClientNum);
+                }
+                finally
+                {
+                    this._clientStreamMutex.ReleaseMutex();
+                }
+
+                //if there was actually data received, tell the server to broadcast it
+                if (!string.IsNullOrWhiteSpace(dataFromClient))
+                {
+                    dataFromClient = string.Format("[{0}]: {1}", this.ClientNum, dataFromClient);
+                    this._server.BroadcastMessage(dataFromClient);
                 }
             }
         }
